@@ -9,12 +9,15 @@ from datetime import datetime, timedelta, timezone
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import settings
 
 BBox = tuple[float, float, float, float]
 TIMEOUT = 30.0
 
 
+@cached("usgs_earthquakes")
 def earthquakes(
     bbox: BBox,
     min_magnitude: float = 2.5,

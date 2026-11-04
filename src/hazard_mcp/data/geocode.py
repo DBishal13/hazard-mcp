@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import USER_AGENT
 
 TIMEOUT = 10.0
 
 
+@cached("geocode")
 def geocode(query: str) -> dict:
     """Resolve a free-text place name to {lat, lon, display_name}."""
     resp = httpx.get(

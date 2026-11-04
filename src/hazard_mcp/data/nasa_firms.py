@@ -13,6 +13,8 @@ import io
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import settings
 
 BBox = tuple[float, float, float, float]
@@ -23,6 +25,7 @@ class FirmsNotConfigured(RuntimeError):
     pass
 
 
+@cached("nasa_firms")
 def active_fires(bbox: BBox, source: str = "VIIRS_SNPP_NRT", days: int = 1) -> list[dict]:
     """Active fire detections (satellite hotspots) intersecting bbox in the
     last `days` days (1-10).

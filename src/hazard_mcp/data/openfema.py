@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import settings
 
 TIMEOUT = 30.0
 
 
+@cached("openfema_declarations")
 def disaster_declarations(
     state: str | None = None,
     incident_type: str | None = None,
@@ -43,6 +46,7 @@ def disaster_declarations(
     return resp.json().get("DisasterDeclarationsSummaries", [])
 
 
+@cached("openfema_nfip")
 def nfip_claims(
     state: str | None = None,
     county: str | None = None,

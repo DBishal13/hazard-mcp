@@ -101,10 +101,15 @@ the actual MCP protocol layer (tool discovery + `call_tool`), not just direct Py
 calls. Demo-verified against Naples, FL (`location_risk_summary` pulled 10 disaster
 declarations, 36 river gauges, and rendered a combined map in one call).
 
+## Caching
+Every upstream response is cached on disk under `data/cache/<source>/` with a
+per-source TTL (5 min for NWS alerts up to 30 days for geocodes; see
+`TTL` in `src/hazard_mcp/cache.py`), so repeat `location_risk_summary` calls
+for the same area return instantly. Failed calls are never cached. Set
+`HAZARD_MCP_CACHE_ENABLED=false` to always hit the live APIs.
+
 ## Next steps
 - Deploy behind a live demo (HTTP/SSE transport + a small landing page, similar to the
   surge-exposure project) so it's usable without a local MCP host.
-- Cache hazard responses (same disk-cache pattern as surge-exposure) to make
-  `location_risk_summary` cheaper on repeat calls for the same area.
 - Publish a standalone NWPS API client to PyPI (none exists yet, per the original
   research — reusable across this and the surge-exposure project).
