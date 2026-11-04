@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import USER_AGENT, settings
 
 TIMEOUT = 30.0
 
 
+@cached("nws_alerts")
 def active_alerts_near(lat: float, lon: float) -> list[dict]:
     """Active NWS alerts (severe weather, flood, fire weather, etc.)
     covering the given point."""
@@ -26,6 +29,7 @@ def active_alerts_near(lat: float, lon: float) -> list[dict]:
     return _extract(resp.json())
 
 
+@cached("nws_alerts")
 def active_alerts_in_state(state: str) -> list[dict]:
     """Active NWS alerts for a 2-letter state code."""
     resp = httpx.get(

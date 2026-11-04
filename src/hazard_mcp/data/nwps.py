@@ -10,12 +10,15 @@ from __future__ import annotations
 
 import httpx
 
+from hazard_mcp.cache import cached
+
 from hazard_mcp.config import settings
 
 BBox = tuple[float, float, float, float]
 TIMEOUT = 30.0
 
 
+@cached("nwps_gauges")
 def gauges_in_bbox(bbox: BBox, catfim: bool = False) -> list[dict]:
     """River gauge metadata within bbox."""
     min_lon, min_lat, max_lon, max_lat = bbox
@@ -33,6 +36,7 @@ def gauges_in_bbox(bbox: BBox, catfim: bool = False) -> list[dict]:
     return resp.json().get("gauges", [])
 
 
+@cached("nwps_stageflow")
 def gauge_stageflow(identifier: str) -> dict:
     """Observed + forecast stage/flow for a single gauge (LID or USGS ID)."""
     resp = httpx.get(f"{settings.nwps_base_url}/gauges/{identifier}/stageflow", timeout=TIMEOUT)
@@ -40,6 +44,7 @@ def gauge_stageflow(identifier: str) -> dict:
     return resp.json()
 
 
+@cached("nwm_fim")
 def flood_inundation_extent(bbox: BBox, layer: int = 0) -> list[dict]:
     """Live NWM analysis-and-assimilation flood-inundation extent polygons
     intersecting bbox, as [{geometry: <geojson geometry>, attributes: {...}}].

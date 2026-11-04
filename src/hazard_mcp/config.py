@@ -12,6 +12,9 @@ class Settings(BaseSettings):
 
     data_dir: Path = PROJECT_ROOT / "data"
     output_dir: Path = PROJECT_ROOT / "data" / "maps"
+    cache_dir: Path = PROJECT_ROOT / "data" / "cache"
+    # Set HAZARD_MCP_CACHE_ENABLED=false to always hit the live APIs.
+    cache_enabled: bool = True
 
     openfema_base_url: str = "https://www.fema.gov/api/open"
     usgs_earthquake_base_url: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"
