@@ -2,18 +2,32 @@
 
 from __future__ import annotations
 
+import re
+
 import httpx
 
 from hazard_mcp.cache import cached
-
 from hazard_mcp.config import USER_AGENT
 
 TIMEOUT = 10.0
 
 
-@cached("geocode")
+_LATLON = re.compile(r"^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$")
+
+
 def geocode(query: str) -> dict:
-    """Resolve a free-text place name to {lat, lon, display_name}."""
+    """Resolve a free-text place name (or a literal 'lat,lon') to
+    {lat, lon, display_name}."""
+    m = _LATLON.match(query)
+    if m:
+        lat, lon = float(m[1]), float(m[2])
+        if -90 <= lat <= 90 and -180 <= lon <= 180:
+            return {"lat": lat, "lon": lon, "display_name": f"{lat:.4f}, {lon:.4f}"}
+    return _geocode_place(query)
+
+
+@cached("geocode")
+def _geocode_place(query: str) -> dict:
     resp = httpx.get(
         "https://nominatim.openstreetmap.org/search",
         params={"q": query, "format": "json", "limit": 1},

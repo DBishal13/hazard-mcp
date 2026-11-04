@@ -68,6 +68,26 @@ To use it from Claude Desktop (or another MCP host), add to its config:
 }
 ```
 
+### Over HTTP (remote MCP + demo page)
+```bash
+hazard-mcp --http          # http://localhost:8000
+```
+This serves the MCP server over streamable HTTP at `/mcp` (stateless, so any
+serverless instance can answer any request), plus a small demo:
+
+| Route | What it does |
+|---|---|
+| `/` | Landing page with a "try it" box and connection instructions |
+| `/api/summary?place=Naples, FL&radius_km=50` | `location_risk_summary` as JSON (radius capped at 150 km) |
+| `/api/map?place=...` or `?lat=..&lon=..` | Interactive hazard map (HTML) |
+| `/health` | Liveness check |
+
+In HTTP mode, set `HAZARD_MCP_PUBLIC_URL` so `render_hazard_map` returns a
+clickable `map_url` instead of a path on the server's disk.
+
+The same app deploys to Vercel as-is (`api/index.py` + `vercel.json`); writes
+go to `/tmp` there automatically.
+
 ## Run with Docker
 ```bash
 docker build -t hazard-mcp .
@@ -109,7 +129,5 @@ for the same area return instantly. Failed calls are never cached. Set
 `HAZARD_MCP_CACHE_ENABLED=false` to always hit the live APIs.
 
 ## Next steps
-- Deploy behind a live demo (HTTP/SSE transport + a small landing page, similar to the
-  surge-exposure project) so it's usable without a local MCP host.
 - Publish a standalone NWPS API client to PyPI (none exists yet, per the original
   research — reusable across this and the surge-exposure project).

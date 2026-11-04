@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>hazard-mcp: multi-hazard intelligence for AI agents</title>
+<meta name="description" content="One MCP server for FEMA, USGS, NWS, NASA and NOAA hazard data.">
+<style>
+  :root {
+    --bg: #fafaf8; --fg: #1d1d1b; --muted: #5f5e5a; --line: #e4e2dc;
+    --card: #fff; --accent: #2a78d6; --code: #f2f1ed;
+    --quake: #2a78d6; --fire: #eb6834; --flood: #1baf7a; --alert: #eda100; --decl: #e87ba4; --gauge: #008300;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151514; --fg: #ecebe6; --muted: #a3a29c; --line: #2c2b29; --card: #1c1c1a; --code: #242422; --accent: #6aa5ec; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 20px 64px; }
+  h1 { font-size: clamp(28px, 5vw, 40px); line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.01em; }
+  h2 { font-size: 20px; margin: 44px 0 12px; }
+  p.lede { font-size: 18px; color: var(--muted); margin: 0 0 20px; max-width: 640px; }
+  .sources { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .sources li { font-size: 13px; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; display: flex; align-items: center; gap: 6px; background: var(--card); }
+  .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  form { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, button { font: inherit; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  input[type=text] { flex: 1 1 260px; }
+  button { background: var(--accent); color: #fff; border-color: transparent; cursor: pointer; font-weight: 600; }
+  button:disabled { opacity: .6; cursor: progress; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 16px; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .stat .n { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .stat.err .n { font-size: 14px; font-weight: 500; color: var(--muted); }
+  #where { margin-top: 14px; color: var(--muted); font-size: 14px; }
+  iframe { width: 100%; height: 440px; border: 1px solid var(--line); border-radius: 10px; margin-top: 14px; background: var(--card); }
+  pre, code { font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  pre { background: var(--code); padding: 14px 16px; border-radius: 10px; overflow-x: auto; margin: 0; }
+  code { background: var(--code); padding: 1px 5px; border-radius: 4px; }
+  pre code { padding: 0; background: none; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row pre { flex: 1; }
+  .copy { padding: 8px 12px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  td { padding: 7px 8px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { white-space: nowrap; padding-right: 16px; }
+  .note { font-size: 13px; color: var(--muted); }
+  a { color: var(--accent); }
+  @media (max-width: 600px) {
+    td { display: block; padding: 0 0 8px; }
+    td:first-child { border-bottom: none; padding-top: 10px; padding-bottom: 2px; white-space: normal; }
+    code { word-break: break-all; }
+  }
+  footer { margin-top: 56px; font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>hazard-mcp</h1>
+  <p class="lede">One MCP server that gives an AI agent the US hazard picture for any place: disaster declarations, weather alerts, earthquakes, wildfires, river gauges and live flood extent.</p>
+  <ul class="sources">
+    <li><span class="dot" style="background:var(--decl)"></span>FEMA OpenFEMA</li>
+    <li><span class="dot" style="background:var(--alert)"></span>NWS alerts</li>
+    <li><span class="dot" style="background:var(--quake)"></span>USGS earthquakes</li>
+    <li><span class="dot" style="background:var(--fire)"></span>NASA EONET + FIRMS</li>
+    <li><span class="dot" style="background:var(--gauge)"></span>NOAA NWPS gauges</li>
+    <li><span class="dot" style="background:var(--flood)"></span>NWM flood inundation</li>
+  </ul>
+
+  <h2>Try it</h2>
+  <form id="f">
+    <input type="text" id="place" placeholder="A US place, e.g. Naples, FL" value="Naples, FL" required maxlength="120" aria-label="Place">
+    <select id="radius" aria-label="Radius">
+      <option value="25">25 km</option>
+      <option value="50" selected>50 km</option>
+      <option value="100">100 km</option>
+    </select>
+    <button id="go">Get hazard summary</button>
+  </form>
+  <div id="where"></div>
+  <div class="grid" id="stats"></div>
+  <div id="mapwrap"></div>
+  <p class="note">This is what the <code>location_risk_summary</code> tool returns, called through <code>/api/summary</code>. First lookups for a new place take a few seconds; repeats are cached.</p>
+
+  <h2>Connect your agent</h2>
+  <p>Add it as a remote MCP server (streamable HTTP, no auth):</p>
+  <div class="row"><pre><code id="url"></code></pre><button class="copy" data-copy="url">Copy</button></div>
+  <p class="note" style="margin-top:10px">In Claude, add it under Settings → Connectors → Add custom connector. Or run it locally over stdio: <code>pip install git+https://github.com/DBishal13/hazard-mcp</code>, then <code>hazard-mcp</code>.</p>
+
+  <h2>Tools</h2>
+  <table>
+    <tr><td><code>location_risk_summary</code></td><td>Geocode a place and pull every source for the surrounding radius in one call.</td></tr>
+    <tr><td><code>render_hazard_map</code></td><td>Turn a summary into an interactive map (returns a link).</td></tr>
+    <tr><td><code>get_disaster_declarations</code></td><td>FEMA declarations by state and incident type.</td></tr>
+    <tr><td><code>get_nfip_claims</code></td><td>Redacted NFIP flood-insurance claims by state/county.</td></tr>
+    <tr><td><code>get_weather_alerts</code></td><td>Active NWS alerts covering a point.</td></tr>
+    <tr><td><code>get_earthquakes</code></td><td>USGS earthquakes in a bounding box.</td></tr>
+    <tr><td><code>get_wildfire_events</code> / <code>get_active_fires</code></td><td>NASA EONET wildfire events and FIRMS satellite hotspots.</td></tr>
+    <tr><td><code>get_river_gauges</code> / <code>get_flood_inundation_extent</code></td><td>NOAA river gauges and live NWM flood-inundation polygons.</td></tr>
+    <tr><td><code>geocode</code></td><td>Place name to lat/lon (OpenStreetMap Nominatim).</td></tr>
+  </table>
+
+  <footer>
+    Built by <a href="https://dbishal13.github.io">Bishal Dhungana</a> ·
+    <a href="https://github.com/DBishal13/hazard-mcp">Source on GitHub</a> ·
+    Demo only, not for life-safety decisions: check official sources.
+  </footer>
+</main>
+<script>
+  const mcpUrl = location.origin + "/mcp";
+  document.getElementById("url").textContent = mcpUrl;
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(document.getElementById(b.dataset.copy).textContent); b.textContent = "Copied"; }
+    catch { b.textContent = "Select & copy"; }
+    setTimeout(() => (b.textContent = "Copy"), 1500);
+  }));
+
+  const LABELS = [
+    ["disaster_declarations", "FEMA declarations", "--decl"],
+    ["weather_alerts", "Active NWS alerts", "--alert"],
+    ["earthquakes", "Earthquakes (30 d)", "--quake"],
+    ["wildfire_events", "Wildfire events", "--fire"],
+    ["active_fires", "Fire hotspots (24 h)", "--fire"],
+    ["river_gauges", "River gauges", "--gauge"],
+    ["flood_inundation_extent", "Flood-extent polygons", "--flood"],
+  ];
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+  document.getElementById("f").addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = document.getElementById("go"), where = document.getElementById("where"),
+          stats = document.getElementById("stats"), mapwrap = document.getElementById("mapwrap");
+    const place = document.getElementById("place").value.trim(), radius = document.getElementById("radius").value;
+    btn.disabled = true; btn.textContent = "Checking 7 sources…"; stats.innerHTML = ""; mapwrap.innerHTML = ""; where.textContent = "";
+    try {
+      const qs = new URLSearchParams({ place, radius_km: radius });
+      const r = await fetch("/api/summary?" + qs);
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error || r.statusText);
+      where.textContent = `${d.location.display_name} · ${d.radius_km} km radius`;
+      stats.innerHTML = LABELS.map(([k, label, color]) => {
+        const v = d[k], isErr = v && !Array.isArray(v);
+        const n = isErr ? (k === "active_fires" && /key/i.test(v.error) ? "Needs API key" : "Unavailable") : v.length;
+        return `<div class="stat${isErr ? " err" : ""}" ${isErr ? `title="${esc(v.error)}"` : ""}>
+          <div class="n">${esc(n)}</div><div class="l"><span class="dot" style="background:var(${color})"></span>${label}</div></div>`;
+      }).join("");
+      const m = new URLSearchParams({ lat: d.location.lat, lon: d.location.lon, radius_km: d.radius_km });
+      mapwrap.innerHTML = `<iframe title="Hazard map" loading="lazy" src="/api/map?${m}"></iframe>`;
+    } catch (err) {
+      where.textContent = "Couldn't get a summary: " + err.message;
+    } finally {
+      btn.disabled = false; btn.textContent = "Get hazard summary";
+    }
+  });
+</script>
+</body>
+</html>
