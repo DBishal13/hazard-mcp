@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -6,15 +7,22 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 USER_AGENT = "hazard-mcp/0.1 (personal portfolio project)"
 
+# Serverless hosts (Vercel) only allow writes under /tmp.
+_DATA_ROOT = Path("/tmp/hazard-mcp") if os.environ.get("VERCEL") else PROJECT_ROOT / "data"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="HAZARD_MCP_", env_file=".env")
 
-    data_dir: Path = PROJECT_ROOT / "data"
-    output_dir: Path = PROJECT_ROOT / "data" / "maps"
-    cache_dir: Path = PROJECT_ROOT / "data" / "cache"
+    data_dir: Path = _DATA_ROOT
+    output_dir: Path = _DATA_ROOT / "maps"
+    cache_dir: Path = _DATA_ROOT / "cache"
     # Set HAZARD_MCP_CACHE_ENABLED=false to always hit the live APIs.
     cache_enabled: bool = True
+
+    # HTTP mode: public base URL of the deployment (for map links) and port.
+    public_url: str | None = None
+    port: int = 8000
 
     openfema_base_url: str = "https://www.fema.gov/api/open"
     usgs_earthquake_base_url: str = "https://earthquake.usgs.gov/fdsnws/event/1/query"

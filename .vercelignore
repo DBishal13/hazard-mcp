@@ -1,0 +1,5 @@
+tests/
+data/
+*.egg-info/
+.venv/
+image.png

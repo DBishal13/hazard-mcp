@@ -1,0 +1,6 @@
+# Runtime deps for the Vercel deployment (mirrors pyproject.toml).
+mcp[cli]>=1.2,<2
+httpx>=0.27
+pydantic-settings>=2.5
+python-dotenv>=1.0
+folium>=0.17

@@ -40,7 +40,15 @@ def render_map(features: list[dict], center: tuple[float, float] | None = None) 
     else:
         lat, lon = 27.5, -81.5  # Florida-ish fallback
 
-    fmap = folium.Map(location=[lat, lon], zoom_start=7, tiles="cartodbpositron")
+    # CARTO basemaps (Folium's "cartodbpositron") now need an API key and
+    # render watermarked tiles without one; Esri's light-gray canvas is free.
+    fmap = folium.Map(
+        location=[lat, lon],
+        zoom_start=9,
+        tiles="https://services.arcgisonline.com/arcgis/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+        attr="Tiles &copy; Esri",
+        max_zoom=16,
+    )
 
     for f in located:
         color = CATEGORY_COLOR.get(f["category"], DEFAULT_COLOR)

@@ -8,9 +8,12 @@ dependencies = [
     "httpx>=0.27",
     "pydantic-settings>=2.5",
     "python-dotenv>=1.0",
-    "duckdb>=1.1",
     "folium>=0.17",
+    "uvicorn>=0.30",
 ]
+
+[project.scripts]
+hazard-mcp = "hazard_mcp.server:main"
 
 [project.optional-dependencies]
 dev = [
@@ -25,3 +28,6 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+hazard_mcp = ["static/*"]

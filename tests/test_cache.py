@@ -110,7 +110,7 @@ def test_every_real_client_is_wrapped():
     )
 
     for fn in [
-        geocode.geocode, openfema.disaster_declarations, openfema.nfip_claims,
+        geocode._geocode_place, openfema.disaster_declarations, openfema.nfip_claims,
         nws_alerts.active_alerts_near, nws_alerts.active_alerts_in_state,
         usgs_earthquakes.earthquakes, nasa_eonet.events, nasa_firms.active_fires,
         nwps.gauges_in_bbox, nwps.gauge_stageflow, nwps.flood_inundation_extent,

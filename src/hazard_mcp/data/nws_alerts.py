@@ -9,7 +9,6 @@ from __future__ import annotations
 import httpx
 
 from hazard_mcp.cache import cached
-
 from hazard_mcp.config import USER_AGENT, settings
 
 TIMEOUT = 30.0
